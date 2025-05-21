@@ -1,38 +1,66 @@
-.App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+html, body {
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  background-color: #262c3b;
+}
+
+.App {
+  /* This scales the canvas to the viewport size */
+  transform-origin: top center;
+}
+
+.canvas-container {
+  position: static;
+  transform-origin: top center;
+  display: flex;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+
+  @media only screen and (max-width: 414px){
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
 }
 
-.App-link {
-  color: #61dafb;
+#resumeCanvas {
+  position: static;
+  border: 1px solid #000;
+  cursor: pointer;
+  display: block;
+  margin: 0 auto;
+  background-color: #fff;
+
+  /* This scales the pixels to the canvas */
+  transform-origin: top center;
+  margin-bottom: 100vh;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+
+.colorBar {
+  position: fixed;
+  bottom: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  width: 90vw;
+  height: 3vh;
+  background-color: transparent;
+  border-radius: 100px;
+  margin-top: auto;
+  margin-bottom: 2vh;
+  transform-origin: bottom left;
+}
+
+.colorButton {
+  flex-basis: calc((90vw / 16) - 5px);
+  width: min(calc((90vw / 16) - 5px), calc((10vh / 2) - 5px));
+  height: min(calc((90vw / 16) - 5px), calc((10vh / 2) - 5px));
+  max-height: 50px;
+  min-height: 15px;
+  border: 2px solid #000;
+  border-radius: 5px;
+  cursor: pointer;
+  margin: calc(5px / 16);
 }
