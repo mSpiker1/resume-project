@@ -1,4 +1,4 @@
-import React, { useState, useRef} from 'react';
+import React, { useState, useRef, useEffect} from 'react';
 import { ChromePicker } from 'react-color';
 import './utils/pixel-perfect.js';
 import './App.css';
@@ -7,7 +7,8 @@ function App() {
   // Constants handling drawing canvas directly
   const canvasRef = useRef(null);
   const canvasContainerRef = useRef(null);
-  const [canvasSize, setCanvasSize] = useState({ width: 512, height: 512 });
+  const velocity = useRef({ x: 0, y: 0 });
+  const animationFrameID = useRef(null);
   const [scale, setScale] = useState(1);
 
   // Constants handling drawing functions
@@ -18,6 +19,33 @@ function App() {
   // Constants handling colors and color changes
   const [selectedColor, setSelectedColor] = useState('#000000'); // Init with default to black
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+
+  // Constants handling drag momentum
+  const isDragging = useRef(false);
+  const dragStart = useRef({ x: 0, y: 0 });
+  const scrollStart = useRef({ x: 0, y: 0 });
+  const lastDrag = useRef({ time: 0, x: 0, y: 0 });
+
+  //constant handling text overlay
+  const [isOverlayVisible, setIsOverlayVisible] = useState(true);
+
+  // Enable overlay toggle
+  const toggleOverlay = () => setIsOverlayVisible((prev) => !prev);
+
+  // On load actions
+  useEffect(() => {
+    // Center the canvas
+    const wrapper = canvasContainerRef.current;
+    if (wrapper) {
+      wrapper.scrollLeft = (canvasRef.current.width - wrapper.clientWidth) / 2;
+      wrapper.scrollTop = (canvasRef.current.height - wrapper.clientHeight) / 2;
+    }
+
+    // Prevent context menu
+    const preventContextMenu = (e) => e.preventDefault();
+    window.addEventListener("contextmenu", preventContextMenu);
+    return () => window.removeEventListener("contextmenu", preventContextMenu);
+  }, []);
 
   // Toggle color picker state
   const togglePicker = () => {
@@ -42,6 +70,78 @@ function App() {
     };
   };
 
+  // Handle left/right mouse clicks
+  const handleMouseDown = (e) => {
+    if (e.button === 2) { // Right cick
+      e.preventDefault();
+
+      // Cancel any currently active momentum immediately
+      if (animationFrameID.current !== null) {
+        cancelAnimationFrame(animationFrameID.current);
+        animationFrameID.current = null;
+      }
+      velocity.current = { x: 0, y: 0 };
+
+      // Always assume click-and-drag
+      isDragging.current = true;
+
+      // Drag timer for momentum
+      lastDrag.current = { time: performance.now(), x: e.clientX, y: e.clientY };
+
+      // Get positions to determine wrapper velocity later
+      dragStart.current = { x: e.clientX, y: e.clientY };
+      const wrapper = canvasContainerRef.current;
+      scrollStart.current = { x: wrapper.scrollLeft, y: wrapper.scrollTop };
+    } else if (e.button === 0) { // Left click
+      startDrawing(e);
+    }
+  };
+
+  // Handle right/left click-and-drag
+  const handleMouseMove = (e) => {
+    if (isDragging.current) {
+      e.preventDefault();
+
+      // Get positional differences
+      const dx = e.clientX - dragStart.current.x;
+      const dy = e.clientY - dragStart.current.y;
+
+      // Set up scrolling variables to allow momentum to keep moving the canvas
+      const wrapper = canvasContainerRef.current;
+      wrapper.scrollLeft = scrollStart.current.x - dx;
+      wrapper.scrollTop = scrollStart.current.y - dy;
+
+      // Keep track of momentum through velocity
+      // Also track velocity per 16 frames(?) to properly determine momentum
+      const now = performance.now();
+      const dt = now - lastDrag.current.time || 16;
+      velocity.current = {
+        x: -((e.clientX - lastDrag.current.x) / dt * 16) * 0.5,
+        y: -((e.clientY - lastDrag.current.y) / dt * 16) * 0.5
+      };
+      lastDrag.current = { time: now, x: e.clientX, y: e.clientY };
+    } else if (e.buttons === 1) {
+      draw(e);
+    }
+  };
+
+  // Stop click-and-drag events
+  const handleMouseUp = (e) => {
+    if (e.button === 2) {
+      isDragging.current = false;
+
+      // Employ velocity check for a minimum threshold before applying momentum
+      const speed = Math.hypot(velocity.current.x, velocity.current.y);
+      if (speed > 3) {
+        startMomentum();
+      } else {
+        velocity.current = { x: 0, y: 0 };
+      }
+    } else if (e.button === 0) {
+      endDrawing();
+    }
+  };
+
   // Set isDrawing event to true
   const startDrawing = (e) => {
     // Set drawing value
@@ -63,13 +163,9 @@ function App() {
   // Handles the user drawing on the canvas
   const draw = (e) => {
     // Exit function if isDrawing is false
-    if (!isDrawing) return;
-
-    const canvas = canvasRef.current;
-    const context = canvas.getContext('2d');
-    const { x, y } = getMousePos(e);
-
+    if (!isDrawing || e.buttons !== 1) return;
     // Interpolation calcs (funny math that I totally for sure did without any help)
+    const { x, y } = getMousePos(e);
     const prev = lastPos.current;
     if(prev) {
       // Get difference from current coords to lastPos
@@ -104,36 +200,74 @@ function App() {
     context.beginPath();
     context.arc(x, y, drawSize / 2, 0, 2 * Math.PI);
     context.fill();
-  }
+  };
+
+  // Momentum handler
+  const startMomentum = () => {
+    const wrapper = canvasContainerRef.current;
+    let { x, y } = velocity.current;
+
+    // Adjust to tweak downward velocity scaling
+    const step = () => {
+      x *= 0.95;
+      y *= 0.95;
+      wrapper.scrollLeft += x;
+      wrapper.scrollTop += y;
+
+      if(Math.abs(x) > 0.5 || Math.abs(y) > 0.5) {
+        animationFrameID.current = requestAnimationFrame(step);
+      } else {
+        cancelAnimationFrame(animationFrameID.current);
+      }
+    };
+
+    animationFrameID.current = requestAnimationFrame(step);
+  };
 
   return (
     <div className="App">
-      <header className="header">
-        Resume Test
-      </header>
-      <div ref={canvasContainerRef} className="canvas-container">
+      {!isOverlayVisible && (
+        <div className="overlay-tab" onClick={toggleOverlay}>
+          ▶
+        </div>
+      )}
+      {isOverlayVisible && (
+        <div className={`canvas-overlay ${isOverlayVisible ? 'visible' : 'hidden'}`}>
+          <div className="overlay-bar">
+            <span>Placeholder Text</span>
+            <div className="overlay-hide-button" onClick={toggleOverlay}>
+              Let Me Draw!
+            </div>
+          </div>
+        </div>
+      )}
+      <div ref={canvasContainerRef}
+        className={`canvas-container ${isOverlayVisible ? 'disabled' : ''}`}
+      >
         <canvas
           ref={canvasRef}
           width={5000}
           height={5000}
           class="pixel-perfect"
           className="drawing-canvas"
-          onMouseDown={startDrawing}
-          onMouseUp={endDrawing}
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleMouseUp}
           onMouseLeave={endDrawing}
-          onMouseMove={draw}
-        ></canvas>
-      </div>
-      <div className={`color-picker-panel ${isPickerOpen ? 'open' : ''}`}>
-        <div className="picker-tab" onClick={togglePicker}>
-          {isPickerOpen ? '▶' : '◀'}
-        </div>
-        <ChromePicker
-          color={selectedColor}
-          onChange={handleColorChange}
-          disableAlpha
+          onMouseMove={handleMouseMove}
         />
       </div>
+      {!isOverlayVisible && (
+        <div className={`color-picker-panel ${isPickerOpen ? 'open' : ''}`}>
+          <div className="picker-tab" onClick={togglePicker}>
+            {isPickerOpen ? '▶' : '◀'}
+          </div>
+          <ChromePicker
+            color={selectedColor}
+            onChange={handleColorChange}
+            disableAlpha
+          />
+        </div>
+      )}
     </div>
   );
 }
