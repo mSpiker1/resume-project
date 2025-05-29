@@ -36,31 +36,47 @@ html, body {
 }
 
 
-.colorBar {
+.color-picker-panel {
   position: fixed;
-  bottom: 10%;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  width: 90vw;
-  height: 3vh;
-  background-color: transparent;
-  border-radius: 100px;
-  margin-top: auto;
-  margin-bottom: 2vh;
-  transform-origin: bottom left;
+  top: 20%;
+  right: -240px;
+  width: 240px;
+  transition: right 0.3s ease;
+  z-index: 1000;
 }
 
-.colorButton {
-  flex-basis: calc((90vw / 16) - 5px);
-  width: min(calc((90vw / 16) - 5px), calc((10vh / 2) - 5px));
-  height: min(calc((90vw / 16) - 5px), calc((10vh / 2) - 5px));
-  max-height: 50px;
-  min-height: 15px;
-  border: 2px solid #000;
-  border-radius: 5px;
+.color-picker-panel.open {
+  right: 0;
+}
+
+.picker-tab {
+  position: absolute;
+  left: -30px;
+  top: 0;
+  height: 40px;
+  width: 30px;
+  background-color: #333;
+  color: white;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  margin: calc(5px / 16);
+  border-top-left-radius: 5px;
+  border-bottom-left-radius: 5px;
+}
+
+@media (max-width: 768px) {
+  .color-picker-panel {
+    width: 80vw;
+    right: -80vw;
+  }
+
+  .color-picker-panel.open {
+    right: 0;
+  }
+
+  .picker-tab {
+    left: -30px;
+  }
 }

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useRef} from 'react';
+import { ChromePicker } from 'react-color';
 import './utils/pixel-perfect.js';
 import './App.css';
 
@@ -6,7 +7,7 @@ function App() {
   // Constants handling drawing canvas directly
   const canvasRef = useRef(null);
   const canvasContainerRef = useRef(null);
-  const [canvasSize, setCanvasSize] = useState({ width: 512, height: 512 }); // try to make this modular later
+  const [canvasSize, setCanvasSize] = useState({ width: 512, height: 512 });
   const [scale, setScale] = useState(1);
 
   // Constants handling drawing functions
@@ -16,24 +17,12 @@ function App() {
 
   // Constants handling colors and color changes
   const [selectedColor, setSelectedColor] = useState('#000000'); // Init with default to black
-  const colors = [ // Array of all 32 colors available to users
-    { name: 'burgundy', hex: '#6d001a' }, { name: 'darkred', hex: '#be0039' },
-    { name: 'red', hex: '#ff4500' }, { name: 'orange', hex: '#ffa800' },
-    { name: 'yellow', hex: '#ffd635' }, { name: 'cream', hex: '#fff8b8' },
-    { name: 'darkgreen', hex: '#00a368' }, { name: 'green', hex: '#00cc78' },
-    { name: 'lime', hex: '#7eed56' }, { name: 'darkteal', hex: '#00756f' },
-    { name: 'teal', hex: '#009eaa' }, { name: 'lightteal', hex: '#00ccc0' },
-    { name: 'darkblue', hex: '#2450a4' }, { name: 'blue', hex: '#3690ea' },
-    { name: 'cyan', hex: '#51e9f4' }, { name: 'indigo', hex: '#493ac1' },
-    { name: 'periwinkle', hex: '#6a5cff' }, { name: 'lavender', hex: '#94b3ff' },
-    { name: 'darkpurple', hex: '#811e9f' }, { name: 'purple', hex: '#b44ac0' },
-    { name: 'palepurple', hex: '#e4abff' }, { name: 'magenta', hex: '#de107f' },
-    { name: 'pink', hex: '#ff3881' }, { name: 'palepink', hex: '#ff99aa' },
-    { name: 'darkbrown', hex: '#6d482f' }, { name: 'brown', hex: '#9c6926' },
-    { name: 'beige', hex: '#ffb470' }, { name: 'black', hex: '#000000' },
-    { name: 'darkgrey', hex: '#515252' }, { name: 'grey', hex: '#898d90' },
-    { name: 'lightgrey', hex: '#d4d7d9' }, { name: 'white', hex: '#ffffff' }
-  ]
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
+
+  // Toggle color picker state
+  const togglePicker = () => {
+    setIsPickerOpen(prev => !prev);
+  };
 
   // Handles the user selecting a color
   const handleColorChange = (color) => {
@@ -120,30 +109,30 @@ function App() {
   return (
     <div className="App">
       <header className="header">
-        resume test
+        Resume Test
       </header>
       <div ref={canvasContainerRef} className="canvas-container">
-        <canvas ref={canvasRef} id="resumeCanvas"
-          width={canvasSize.width}
-          height={canvasSize.height}
-          className="pixel-perfect"
-          style={{ width: canvasSize.width, height: canvasSize.height }}
+        <canvas
+          ref={canvasRef}
+          width={5000}
+          height={5000}
+          class="pixel-perfect"
+          className="drawing-canvas"
           onMouseDown={startDrawing}
           onMouseUp={endDrawing}
           onMouseLeave={endDrawing}
           onMouseMove={draw}
         ></canvas>
       </div>
-      <div className="colorBar">
-        {colors.map((color) => (
-          <div
-            key={color.name}
-            className={`colorButton ${color.name}`}
-            data-color={color.name}
-            style={{ backgroundColor: color.hex }}
-            onClick={() => handleColorChange(color)}
-          ></div>
-        ))}
+      <div className={`color-picker-panel ${isPickerOpen ? 'open' : ''}`}>
+        <div className="picker-tab" onClick={togglePicker}>
+          {isPickerOpen ? '▶' : '◀'}
+        </div>
+        <ChromePicker
+          color={selectedColor}
+          onChange={handleColorChange}
+          disableAlpha
+        />
       </div>
     </div>
   );
