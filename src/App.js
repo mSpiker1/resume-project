@@ -9,11 +9,10 @@ function App() {
   const canvasContainerRef = useRef(null);
   const velocity = useRef({ x: 0, y: 0 });
   const animationFrameID = useRef(null);
-  const [scale, setScale] = useState(1);
 
   // Constants handling drawing functions
   const [isDrawing, setIsDrawing] = useState(false);
-  const drawSize = 3;
+  const [drawSize, setDrawSize] = useState(3);
   const lastPos = useRef(null);
 
   // Constants handling colors and color changes
@@ -29,8 +28,7 @@ function App() {
   //constant handling text overlay
   const [isOverlayVisible, setIsOverlayVisible] = useState(true);
 
-  // Enable overlay toggle
-  const toggleOverlay = () => setIsOverlayVisible((prev) => !prev);
+
 
   // On load actions
   useEffect(() => {
@@ -47,16 +45,18 @@ function App() {
     return () => window.removeEventListener("contextmenu", preventContextMenu);
   }, []);
 
+
+
   // Toggle color picker state
-  const togglePicker = () => {
-    setIsPickerOpen(prev => !prev);
-  };
+  const togglePicker = () => setIsPickerOpen(prev => !prev);
+
+  // Enable overlay toggle
+  const toggleOverlay = () => setIsOverlayVisible(prev => !prev);
 
   // Handles the user selecting a color
-  const handleColorChange = (color) => {
-    // Update selected color for the user globally
-    setSelectedColor(color.hex);
-  };
+  const handleColorChange = (color) => setSelectedColor(color.hex);
+
+
 
   // Helper to get mouse position
   const getMousePos = (e) => {
@@ -65,10 +65,12 @@ function App() {
 
     // Return mouse coords
     return {
-      x: Math.floor((e.clientX - rect.left) / scale),
-      y: Math.floor((e.clientY - rect.top) / scale)
+      x: Math.floor(e.clientX - rect.left),
+      y: Math.floor(e.clientY - rect.top)
     };
   };
+
+
 
   // Handle left/right mouse clicks
   const handleMouseDown = (e) => {
@@ -142,6 +144,8 @@ function App() {
     }
   };
 
+
+
   // Set isDrawing event to true
   const startDrawing = (e) => {
     // Set drawing value
@@ -202,6 +206,8 @@ function App() {
     context.fill();
   };
 
+
+
   // Momentum handler
   const startMomentum = () => {
     const wrapper = canvasContainerRef.current;
@@ -224,15 +230,27 @@ function App() {
     animationFrameID.current = requestAnimationFrame(step);
   };
 
+  // Helper function to cancel click-and-drag when entering a UI element
+  const cancelDrag = () => {
+    startMomentum();
+    velocity.current = { x: 0, y: 0 };
+    lastPos.current = null;
+    isDragging.current = false;
+  };
+
+
+
   return (
     <div className="App">
       {!isOverlayVisible && (
-        <div className="overlay-tab" onClick={toggleOverlay}>
+        <div className="overlay-tab"
+        onClick={toggleOverlay}
+        onMouseEnter={cancelDrag}>
           ▶
         </div>
       )}
       {isOverlayVisible && (
-        <div className={`canvas-overlay ${isOverlayVisible ? 'visible' : 'hidden'}`}>
+        <div className={`canvas-overlay ${isOverlayVisible ? 'visible' : ''}`}>
           <div className="overlay-bar">
             <span>Placeholder Text</span>
             <div className="overlay-hide-button" onClick={toggleOverlay}>
@@ -242,8 +260,7 @@ function App() {
         </div>
       )}
       <div ref={canvasContainerRef}
-        className={`canvas-container ${isOverlayVisible ? 'disabled' : ''}`}
-      >
+        className={`canvas-container ${isOverlayVisible ? 'disabled' : ''}`}>
         <canvas
           ref={canvasRef}
           width={5000}
@@ -257,15 +274,35 @@ function App() {
         />
       </div>
       {!isOverlayVisible && (
-        <div className={`color-picker-panel ${isPickerOpen ? 'open' : ''}`}>
+        <div className={`color-picker-panel ${isPickerOpen ? 'open' : ''}`}
+        onMouseEnter={cancelDrag}>
           <div className="picker-tab" onClick={togglePicker}>
             {isPickerOpen ? '▶' : '◀'}
           </div>
-          <ChromePicker
-            color={selectedColor}
-            onChange={handleColorChange}
-            disableAlpha
-          />
+          <div className="color-picker-wrapper">
+            <ChromePicker
+              color={selectedColor}
+              onChange={handleColorChange}
+              disableAlpha
+            />
+          </div>
+          <div className="brush-slider-container"
+          onMouseEnter={cancelDrag}>
+            <input
+              type="range"
+              min="2"
+              max="10"
+              value={drawSize}
+              onChange={(e) => setDrawSize(Number(e.target.value))}
+              className="brush-slider"
+              orient="vertical"
+            />
+            <div className="brush-labels">
+              <div className="brush-label brush-size-large"/>
+              <div className="brush-label brush-size-medium"/>
+              <div className="brush-label brush-size-small"/>
+            </div>
+          </div>
         </div>
       )}
     </div>

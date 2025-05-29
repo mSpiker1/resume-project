@@ -19,18 +19,12 @@ html, body {
   height: 100%;
   pointer-events: auto;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   z-index: 10;
-  transition: transform 0.5s ease-in-out, background-color 0.5s ease-in-out;
+  overflow: hidden;
+  transition: background-color 0.4s ease;
   background-color: #dab36c80;
-}
-
-/* Overlay when hidden */
-.canvas-overlay.hidden {
-  transform: translateX(-100%);
-  background-color: #dab36c00;
-  pointer-events: none;
 }
 
 /* Text inside overlay bar */
@@ -44,6 +38,7 @@ html, body {
   color: black;
   font-size: 1.25rem;
   position: relative;
+  transition: left 0.3s ease;
 }
 
 /* Hide overlay button */
@@ -78,12 +73,13 @@ html, body {
   border-radius: 0 0.5rem 0.5rem 0;
 }
 
-/* canvas interaction setting */
+/* Canvas interaction setting */
 .canvas-container.disabled {
   pointer-events: none;
   filter: blur(1px);
 }
 
+/* Drawing canvas wrapper */
 .canvas-container {
   position: relative;
   width: 100vw;
@@ -105,14 +101,14 @@ html, body {
   margin-bottom: 100vh;
 }
 
-
+/* Color picker ui */
 .color-picker-panel {
+  pointer-events: none;
   position: fixed;
   top: 20%;
   right: -240px;
   width: 240px;
   transition: right 0.3s ease;
-  z-index: 1000;
 }
 
 .color-picker-panel.open {
@@ -132,8 +128,79 @@ html, body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  pointer-events: auto;
   border-top-left-radius: 5px;
   border-bottom-left-radius: 5px;
+}
+
+.color-picker-wrapper {
+  pointer-events: auto;
+}
+
+/* Brush size slider */
+.brush-slider-container {
+  position: relative;
+  left: 151px;
+  height: 180px;
+  width: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 10px;
+  background-color: #ffffff;
+  border: 2px solid #aaa;
+  border-radius: 5px;
+  margin-top: 15px;
+  pointer-events: auto;
+  transition: transform 0.3s ease-in-out;
+}
+
+.brush-slider {
+  position: absolute;
+  writing-mode: bt-lr;
+  appearance: slider-vertical;
+  height: 85%;
+  margin-right: 30px;
+}
+
+.brush-labels {
+  position: relative;
+  background-color: white;
+  top: 0;
+  left: 15px;
+  height: 90%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding-left: 10px;
+}
+
+.brush-label {
+  border-radius: 50%;
+  background-color: black;
+  align-self: center;
+}
+
+.brush-size-large {
+  width: 10px;
+  height: 10px;
+  background-color: black;
+  align-self: center;
+}
+
+.brush-size-medium {
+  width: 6px;
+  height: 6px;
+  background-color: black;
+  align-self: center;
+}
+
+.brush-size-small {
+  width: 2px;
+  height: 2px;
+  background-color: black;
+  align-self: center;
 }
 
 @media (max-width: 768px) {
