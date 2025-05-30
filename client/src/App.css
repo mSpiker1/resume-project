@@ -1,0 +1,244 @@
+html, body {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background-color: #262c3b;
+}
+
+.App {
+  /* This scales the canvas to the viewport size */
+  transform-origin: top center;
+}
+
+/* Overlay when visible */
+.canvas-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  z-index: 10;
+  overflow: hidden;
+  transition: background-color 0.4s ease;
+  background-color: #dab36c80;
+}
+
+/* Text inside overlay bar */
+.overlay-bar {
+  width: 100%;
+  background-color: #f0f0f099;
+  border-top: 3px solid #262c3b;
+  border-bottom: 3px solid #262c3b;
+  padding: 1rem;
+  text-align: center;
+  color: black;
+  font-size: 1.25rem;
+  position: relative;
+  transition: left 0.3s ease;
+}
+
+/* Hide overlay button */
+.overlay-hide-button {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2rem;
+  height: 2rem;
+  background-color: #262c3b;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: bold;
+  border-radius: 0.25rem;
+}
+
+/* Hidden overlay tab */
+.overlay-tab {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #262c3b;
+  color: white;
+  padding: 0.5rem;
+  cursor: pointer;
+  z-index: 5;
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+/* Canvas interaction setting */
+.canvas-container.disabled {
+  pointer-events: none;
+  filter: blur(1px);
+}
+
+/* Drawing canvas wrapper */
+.canvas-container {
+  position: relative;
+  width: 100vw;
+  height:100vh;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.drawing-canvas {
+  position: absolute;
+  border: 1px solid #000;
+  cursor: crosshair; /* make sure to specify pointer for the overlay later */
+  top: 0;
+  left: 0;
+  background-color: #fff;
+
+  /* This scales the pixels to the canvas */
+  transform-origin: top center;
+  margin-bottom: 100vh;
+}
+
+/* Color picker ui */
+.color-picker-panel {
+  pointer-events: none;
+  position: fixed;
+  top: 20%;
+  right: -240px;
+  width: 240px;
+  transition: right 0.3s ease;
+}
+
+.color-picker-panel.open {
+  right: 0;
+}
+
+.picker-tab {
+  position: absolute;
+  left: -30px;
+  top: 0;
+  height: 40px;
+  width: 30px;
+  background-color: #333;
+  color: white;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: auto;
+  border-top-left-radius: 5px;
+  border-bottom-left-radius: 5px;
+}
+
+.color-picker-wrapper {
+  pointer-events: auto;
+}
+
+/* Brush size slider */
+.brush-slider-container {
+  position: relative;
+  left: 151px;
+  height: 180px;
+  width: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 10px;
+  background-color: #ffffff;
+  border: 2px solid #aaa;
+  border-radius: 5px;
+  margin-top: 15px;
+  pointer-events: auto;
+  transition: transform 0.3s ease-in-out;
+}
+
+.brush-slider {
+  position: absolute;
+  writing-mode: bt-lr;
+  appearance: slider-vertical;
+  height: 85%;
+  margin-right: 30px;
+}
+
+.brush-labels {
+  position: relative;
+  background-color: white;
+  top: 0;
+  left: 15px;
+  height: 90%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding-left: 10px;
+}
+
+.brush-label {
+  border-radius: 50%;
+  background-color: black;
+  align-self: center;
+}
+
+.brush-size-large {
+  width: 10px;
+  height: 10px;
+  background-color: black;
+  align-self: center;
+}
+
+.brush-size-medium {
+  width: 6px;
+  height: 6px;
+  background-color: black;
+  align-self: center;
+}
+
+.brush-size-small {
+  width: 2px;
+  height: 2px;
+  background-color: black;
+  align-self: center;
+}
+
+.refresh-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #26398d;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: -200px auto 10px auto;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: transform 0.12 ease;
+}
+
+.refresh-button:hover {
+  transform: scale(1.05);
+}
+
+.refresh-button img {
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .color-picker-panel {
+    width: 80vw;
+    right: -80vw;
+  }
+
+  .color-picker-panel.open {
+    right: 0;
+  }
+
+  .picker-tab {
+    left: -30px;
+  }
+}
