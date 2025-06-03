@@ -277,7 +277,7 @@ function App() {
       const context = canvasRef.current.getContext('2d');
       context.drawImage(img, 0, 0);
     };
-    img.src = 'http://192.168.1.188:3001/latest-canvas?t=' + new Date().getTime();
+    img.src = 'http://192.168.1.188:3001/latest-canvas?t=' + new Date().getTime();  // Make this more modular so it's easier to change on the fly later/for other users
   };
 
 

@@ -33,5 +33,5 @@ app.get('/latest-canvas', (req, res) => {
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running at http://localhost:${PORT}`);
-    console.log(`Accessible on local network at http://192.168.56.1:{PORT}`);
+    console.log(`Accessible on local network at http://192.168.56.1:{PORT}`); // Make this modular as well
 });

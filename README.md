@@ -1,70 +1,43 @@
-# Getting Started with Create React App
+# Custom public drawing canvas React App
+
+This project was created with the goal to advertise myself as a solid candidate for software related positions by displaying links to my relevant personal profiles (e.g. GitHub, LinkedIn, etc.) while simultaneously showing off some of my skills as a developer through a straightforward React app with a slightly complicated code base.
+
+Please note that this project was made with the intent of showing off my skills as a programmer, all packaged within an easily digestible initial experience through my own UI/UX on a streamlined custom web page. The functionality is all you-get-what-you-see, while still offering enough of a user experience that the development itself is noteworthy. This was not meant to be a highly complex project, as that would have defeated the purpose of a quick and effective display of skill. Hopefully you think it's cool, but I'm also very much aware that there is always room to grow, especially at my stage in my career.
+
+# Guide to local app startup
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-## Available Scripts
+This readme reviews how you can set up a local dev environment for this app
+
+## Setting up the client
 
 In the project directory, you can run:
 
 ### `npm start`
 
 Runs the app in the development mode.\
+Make sure you run this command from within the client directory.\
 Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
 The page will reload when you make changes.\
 You may also see any lint errors in the console.
 
-### `npm test`
+Other standard npm commands also work for development purposes, of course.\
+See the Create React App page for more info on those
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Setting up the server
 
-### `npm run build`
+The server is required for other clients to be able to see changes made to the canvas.\
+This is how users are able to make drawings on the canvas that other users can see on their own machines.\
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Changing the ip variable
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Before anything else, you'll need to locate your local ipv4 address for your machine on your network.\
+You will then replace the 'ip' variable within server.js to this address.\
+This will allow your machine to properly save and store the canvas png as changes are made to it.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### `node server.js`
 
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Runs the server portion of the app on port 3001 (note the app itself is run on port 3000).\
+Make sure you run this command from within the server directory.
