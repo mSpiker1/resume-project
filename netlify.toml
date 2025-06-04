@@ -1,0 +1,10 @@
+[build]
+  base = "client"
+  command = "npm run build"
+  publish = "build"
+
+[dev]
+  command = "npm start"
+  targetPort = 3000       # react-scripts start default
+  port = 8888             # Netlify’s dev server port
+  autoLaunch = false
