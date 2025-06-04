@@ -283,7 +283,7 @@ function App() {
     };
 
     // Load the image onto the canvas
-    img.src = `/.netlify/functions/latestCanvas?t=${new DataTransfer().getTime()}`;
+    img.src = `/.netlify/functions/latestCanvas?t=${new Date().getTime()}`;
   };
 
 
