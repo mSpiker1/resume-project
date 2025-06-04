@@ -11,7 +11,7 @@ self.onmessage = async function (e) {
     if(!blob) return;
 
     // if received image blob, save new canvas image
-    if (type === 'save' && blob && serverIp) {
+    if (blob) {
         const formData = new FormData();
         formData.append('image', blob, 'canvas.png');
 

@@ -347,7 +347,7 @@ function App() {
             </div>
           </div>
           <div className="refresh-button" onClick={loadLatestCanvas}>
-            <img src="/refresh.png"/>
+            <img src="/refresh.png" alt="refresh canvas"/>
           </div>
         </div>
       )}
