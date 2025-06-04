@@ -27,7 +27,7 @@ function App() {
   const scrollStart = useRef({ x: 0, y: 0 });
   const lastDrag = useRef({ time: 0, x: 0, y: 0 });
 
-  //constant handling text overlay
+  // Constant handling text overlay
   const [isOverlayVisible, setIsOverlayVisible] = useState(true);
 
 
@@ -267,17 +267,19 @@ function App() {
     isDragging.current = false;
   };
 
-
-
   // Helper function to load the latest canvas art
   const loadLatestCanvas = () => {
+    // Set up canvas
     const img = new Image();
     img.crossOrigin = 'Anonymous';
     img.onload = () => {
       const context = canvasRef.current.getContext('2d');
       context.drawImage(img, 0, 0);
     };
-    img.src = 'http://192.168.1.188:3001/latest-canvas?t=' + new Date().getTime();  // Make this more modular so it's easier to change on the fly later/for other users
+
+    // Load the image onto the canvas
+    img.src = `http://localhost:3001/latest-canvas?t=` + // This needs to be fixed later for production
+      new Date().getTime();
   };
 
 
@@ -307,7 +309,6 @@ function App() {
           ref={canvasRef}
           width={5000}
           height={5000}
-          class="pixel-perfect"
           className="drawing-canvas"
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}

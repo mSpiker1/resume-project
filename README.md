@@ -12,6 +12,12 @@ This readme reviews how you can set up a local dev environment for this app
 
 ## Setting up the client
 
+Within the client directory, you will need to install a few react dependencies:
+
+### `npm install [dependency]`
+
+- react-color
+
 In the project directory, you can run:
 
 ### `npm start`
@@ -29,13 +35,16 @@ See the Create React App page for more info on those
 ## Setting up the server
 
 The server is required for other clients to be able to see changes made to the canvas.\
-This is how users are able to make drawings on the canvas that other users can see on their own machines.\
+This is how users are able to make drawings on the canvas that other users can see on their own machines.
 
-### Changing the ip variable
+Within the server directory, you will need to install a few react dependencies:
 
-Before anything else, you'll need to locate your local ipv4 address for your machine on your network.\
-You will then replace the 'ip' variable within server.js to this address.\
-This will allow your machine to properly save and store the canvas png as changes are made to it.
+### `npm install [dependency]`
+
+- cors\
+- multer
+
+You will then need to run the actual server.
 
 ### `node server.js`
 
