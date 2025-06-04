@@ -16,7 +16,8 @@ Within the client directory, you will need to install a few react dependencies:
 
 ### `npm install [dependency]`
 
-- react-color
+- react-color\
+- node-fetch
 
 In the project directory, you can run:
 

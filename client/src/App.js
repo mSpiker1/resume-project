@@ -37,9 +37,6 @@ function App() {
     // Load the most up-to-date canvas art
     loadLatestCanvas();
 
-    // Instantiate save worker
-    saveWorker.current = new Worker('/saveWorker.js');
-
     // Center the canvas
     const wrapper = canvasContainerRef.current;
     if (wrapper) {
@@ -162,14 +159,22 @@ function App() {
       }
 
       saveTimeout.current = setTimeout(() => {
-        // Send save data to save worker
         const canvas = canvasRef.current;
         canvas.toBlob((blob) => {
-          if (blob && saveWorker.current) {
-            saveWorker.current.postMessage({ blob });
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64data = reader.result;
+            fetch('/.netlify/functions/saveCanvas', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ image: base64data })
+            }).catch(console.error);
+          };
+          if (blob) {
+            reader.readAsDataURL(blob);
           }
         }, 'image/png');
-      }, 2000); // Add a 500ms delay before next save is allowed
+      }, 2000); // Add a 2s delay before next save is allowed
     }
   };
 
@@ -278,8 +283,7 @@ function App() {
     };
 
     // Load the image onto the canvas
-    img.src = `http://localhost:3001/latest-canvas?t=` + // This needs to be fixed later for production
-      new Date().getTime();
+    img.src = `/.netlify/functions/latestCanvas?t=${new DataTransfer().getTime()}`;
   };
 
 
