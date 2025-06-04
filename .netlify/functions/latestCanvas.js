@@ -3,7 +3,7 @@ const path = require('path');
 
 exports.handler = async function () {
   try {
-    const filePath = path.join(__dirname, '../../server/public/canvas.png');
+    const filePath = path.join(__dirname, '../../client/public/canvas.png');
     const image = fs.readFileSync(filePath);
     const base64 = image.toString('base64');
 

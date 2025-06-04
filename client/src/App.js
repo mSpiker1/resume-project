@@ -49,9 +49,6 @@ function App() {
     window.addEventListener("contextmenu", preventContextMenu);
     return () => {
       window.removeEventListener("contextmenu", preventContextMenu);
-      if(saveWorker.current) {
-        saveWorker.current.terminate();
-      }
     }
   }, []);
 

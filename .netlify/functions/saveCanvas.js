@@ -10,7 +10,7 @@ exports.handler = async function (event) {
     const base64 = JSON.parse(event.body).image;
     const buffer = Buffer.from(base64.replace(/^data:image\/png;base64,/, ''), 'base64');
 
-    const outputPath = path.join(__dirname, '../../server/public/canvas.png');
+    const outputPath = path.join(__dirname, '../../client/public/canvas.png');
     fs.writeFileSync(outputPath, buffer);
 
     return { statusCode: 200, body: 'Image saved successfully' };
