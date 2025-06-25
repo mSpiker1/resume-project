@@ -41,7 +41,7 @@ router.get('/server-ip', (req, res) => {
     res.json({ ip: localIp });
 });
 
-router.post('/saveCanvas', upload.none(), (req, res) => {
+router.post('/save-canvas', upload.none(), (req, res) => {
     if (!req.file) {
         return res.status(400).send('No file uploaded.');
     }
@@ -58,7 +58,7 @@ router.post('/saveCanvas', upload.none(), (req, res) => {
     });
 });
 
-router.get('/latestCanvas', (req, res) => {
+router.get('/latest-canvas', (req, res) => {
     const imagePath = path.join(__dirname, 'public/canvas.png');
     if (fs.existsSync(imagePath)) {
         res.sendFile(imagePath);

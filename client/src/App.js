@@ -160,11 +160,13 @@ function App() {
           const reader = new FileReader();
           reader.onloadend = () => {
             const base64data = reader.result;
-            fetch('/api/saveCanvas', {
+            fetch('/api/save-canvas', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ image: base64data })
-            }).catch(console.error);
+            }).then(res => {
+              if(!res.ok) console.error('Save failed');
+            });
           };
           if (blob) {
             reader.readAsDataURL(blob);
@@ -279,7 +281,7 @@ function App() {
     };
 
     // Load the image onto the canvas
-    img.src = `/api/latestCanvas?t=${new Date().getTime()}`;
+    img.src = `/api/latest-canvas?t=${new Date().getTime()}`;
   };
 
 
