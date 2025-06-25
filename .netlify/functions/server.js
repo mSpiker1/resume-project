@@ -2,12 +2,16 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
-const upload = multer();
 const os = require('os');
-const serverless = require('@netlify/functions');
+const serverless = require('serverless-http');
 
 const app = express();
 const router = express.Router();
+const upload = multer();
+
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ extended: true }));
+app.use('/.netlify/functions/server', router);
 
 // Helper function to get the local ipv4 address (for dev environment)
 const getLocalIp = () => {
@@ -33,20 +37,17 @@ const getLocalIp = () => {
 const localIp = getLocalIp();
 const PORT = 3001;
 
-app.use(express.json({ limit: '100mb' }));
-app.use('/.netlify/functions/server', router);
-
 // Set this endpoint to provide the ip to the frontend client
 router.get('/server-ip', (req, res) => {
     res.json({ ip: localIp });
 });
 
 router.post('/save-canvas', upload.none(), (req, res) => {
-    if (!req.file) {
-        return res.status(400).send('No file uploaded.');
+    const base64Data = req.body.image.replace(/^data:image\/png;base64,/, '');
+    if (!base64Data) {
+        return res.status(400).send('Missing image data');
     }
 
-    const base64Data = req.body.image.replace(/^data:image\/png;base64,/, '');
     const outputPath = path.join(__dirname, 'canvas.png');
 
     fs.writeFile(outputPath, base64Data, 'base64', (err) => {
@@ -67,4 +68,4 @@ router.get('/latest-canvas', (req, res) => {
     }
 });
 
-module.exports.handler = serverless.handler(app);
+module.exports.handler = serverless(app);
