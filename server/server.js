@@ -19,7 +19,6 @@ const getLocalIp = () => {
             if (
                 iface.family === 'IPv4'
                 && !iface.internal
-                && iface.address.startsWith('192.168.1.')
             ) {
                 console.log(iface.address);
                 return iface.address;
