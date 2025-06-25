@@ -279,7 +279,7 @@ function App() {
     };
 
     // Load the image onto the canvas
-    img.src = `/api/latest-canvas?t=${new Date().getTime()}`;
+    img.src = `/api/latestCanvas?t=${new Date().getTime()}`;
   };
 
 
