@@ -14,7 +14,6 @@ function App() {
   const [isDrawing, setIsDrawing] = useState(false);
   const [drawSize, setDrawSize] = useState(3);
   const lastPos = useRef(null);
-  const saveWorker = useRef(null);
   const saveTimeout = useRef(null);
 
   // Constants handling colors and color changes
