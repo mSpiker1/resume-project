@@ -47,7 +47,7 @@ router.post('/save-canvas', upload.none(), (req, res) => {
     }
 
     const base64Data = req.body.image.replace(/^data:image\/png;base64,/, '');
-    const outputPath = path.join(__dirname, 'public/canvas.png');
+    const outputPath = path.join(__dirname, 'canvas.png');
 
     fs.writeFile(outputPath, base64Data, 'base64', (err) => {
         if (err) {
@@ -59,7 +59,7 @@ router.post('/save-canvas', upload.none(), (req, res) => {
 });
 
 router.get('/latest-canvas', (req, res) => {
-    const imagePath = path.join(__dirname, 'public/canvas.png');
+    const imagePath = path.join(__dirname, 'canvas.png');
     if (fs.existsSync(imagePath)) {
         res.sendFile(imagePath);
     } else {
