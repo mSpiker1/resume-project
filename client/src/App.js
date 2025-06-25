@@ -160,7 +160,7 @@ function App() {
           const reader = new FileReader();
           reader.onloadend = () => {
             const base64data = reader.result;
-            fetch('https://resume-project-production-0b13.up.railway.app/saveCanvas', {
+            fetch('https://resume-project-production-0b13.up.railway.app/save-canvas', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ image: base64data })
