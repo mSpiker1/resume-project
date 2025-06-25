@@ -161,7 +161,7 @@ function App() {
           const reader = new FileReader();
           reader.onloadend = () => {
             const base64data = reader.result;
-            fetch('/.netlify/functions/saveCanvas', {
+            fetch('/api/saveCanvas', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ image: base64data })
@@ -280,7 +280,7 @@ function App() {
     };
 
     // Load the image onto the canvas
-    img.src = `/.netlify/functions/latestCanvas?t=${new Date().getTime()}`;
+    img.src = `/api/latest-canvas?t=${new Date().getTime()}`;
   };
 
 
