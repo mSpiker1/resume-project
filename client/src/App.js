@@ -36,6 +36,8 @@ function App() {
     // Load the most up-to-date canvas art
     loadLatestCanvas();
 
+    fetch('/api/latest-canvas').then(res => res.text()).then(console.log);
+
     // Center the canvas
     const wrapper = canvasContainerRef.current;
     if (wrapper) {
