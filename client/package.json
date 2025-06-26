@@ -13,7 +13,10 @@
     "react-color": "^2.19.3",
     "react-dom": "^19.1.0",
     "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "cloudinary": "^2.7.0",
+    "serverless-http": "^3.2.0",
+    "express": "^5.1.0"
   },
   "scripts": {
     "start": "react-scripts start",
