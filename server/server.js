@@ -25,6 +25,7 @@ app.post('/save-canvas', async (req, res) => {
     const uploadResponse = await cloudinary.uploader.upload(base64Image, {
         public_id: 'canvas',
         overwrite: true,
+        invalidate: true
     });
   
         res.status(200).json({ url: uploadResponse.secure_url });
