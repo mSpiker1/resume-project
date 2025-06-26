@@ -48,4 +48,8 @@ router.get('/latest-canvas', (req, res) => {
     res.json({ url: imageUrl });
 });
 
+router.get('/test', (req, res) => {
+    res.json({ message: "Netlify function working!" });
+});
+
 module.exports.handler = serverless(app);
