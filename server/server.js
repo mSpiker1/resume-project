@@ -38,7 +38,7 @@ app.get('/latest-canvas', (req, res) => {
     const timeStamp = Date.now();
     const imageUrl = `https://res.cloudinary.com/
     ${process.env.CLOUD_NAME}/image/upload/canvas.png?t=${timeStamp}`;
-    res.set('Cache-Control', 'no-store');
+    //res.set('Cache-Control', 'no-store');
     res.redirect(imageUrl);
 });
 
