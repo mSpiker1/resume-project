@@ -14,7 +14,7 @@ const app = express();
 const router = express.Router();
 
 app.use(express.json({ limit: '100mb' }));
-app.use('/netlify/functions/server', router);
+app.use('/client/netlify/functions/server', router);
 
 router.post('/save-canvas', async (req, res) => {
     try {

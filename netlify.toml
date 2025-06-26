@@ -1,12 +1,12 @@
 [build]
   base = "client"
-  functions = "../netlify/functions"
+  functions = "netlify/functions"
   command = "npm run build"
   publish = "build"
 
 [dev]
   command = "npm start"
-  functions = "../netlify/functions"
+  functions = "netlify/functions"
   targetPort = 3000       # react-scripts start default
   port = 8888             # Netlify’s dev server port
   autoLaunch = true
