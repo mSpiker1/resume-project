@@ -2,6 +2,7 @@
 
 # dependencies
 /client/node_modules
+/client/netlify/functions/node_modules
 /server/node_modules
 .netlify/functions/node_modules
 /client/.pnp

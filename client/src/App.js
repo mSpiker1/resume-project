@@ -277,7 +277,7 @@ function App() {
     .then(res => res.json())
     .then(data => {
       const img = new Image();
-      img.crossOrigin = 'anonymous';
+      img.crossOrigin = 'Anonymous';
       img.onload = () => {
         const context = canvasRef.current.getContext('2d');
         context.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);

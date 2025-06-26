@@ -12,9 +12,9 @@
   autoLaunch = true
 
 [[redirects]]
-from = "/api/*"
-to = "/.netlify/functions/server/:splat"
-status = 200
+  from = "/api/:splat"
+  to = "/.netlify/functions/server/:splat"
+  status = 200
 
 [[plugins]]
-package = "@netlify/plugin-functions-install-core"
+  package = "@netlify/plugin-functions-install-core"

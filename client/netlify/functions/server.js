@@ -1,5 +1,6 @@
 const express = require('express');
 const serverless = require('serverless-http');
+const cors = require("cors");
 const cloudinary = require('cloudinary').v2;
 
 cloudinary.config({
@@ -8,13 +9,13 @@ cloudinary.config({
     api_secret: process.env.CLOUD_API_SECRET
 });
 
-console.log("CLOUD_NAME, CLOUD_API_KEY");
-
 const app = express();
 const router = express.Router();
 
+app.use(cors());
 app.use(express.json({ limit: '100mb' }));
-app.use('/client/netlify/functions/server', router);
+app.use(express.urlencoded({ extended: true }));
+app.use('/.netlify/functions/server', router);
 
 router.post('/save-canvas', async (req, res) => {
     try {
