@@ -25,7 +25,6 @@ app.post('/save-canvas', async (req, res) => {
     const uploadResponse = await cloudinary.uploader.upload(base64Image, {
         public_id: 'canvas',
         overwrite: true,
-        folder: 'drawing-app', // Optional: namespace if you're using a folder
     });
   
         res.status(200).json({ url: uploadResponse.secure_url });
@@ -37,7 +36,7 @@ app.post('/save-canvas', async (req, res) => {
 
 app.get('/latest-canvas', (req, res) => {
     const cloudName = process.env.CLOUD_NAME;
-    const imageUrl = `https://res.cloudinary.com/${cloudName}/image/upload/drawing-app/canvas.png`; // folder + public_id
+    const imageUrl = `https://res.cloudinary.com/${cloudName}/image/upload/canvas.png`; // folder + public_id
     res.redirect(imageUrl);
 });
 
