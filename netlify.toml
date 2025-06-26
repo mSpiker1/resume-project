@@ -2,9 +2,15 @@
   base = "client"
   command = "npm run build"
   publish = "build"
+  functions = ".netlify/functions"
 
 [dev]
   command = "npm start"
   targetPort = 3000       # react-scripts start default
   port = 8888             # Netlify’s dev server port
   autoLaunch = true
+
+[[redirects]]
+from = "/api/*"
+to = "/.netlify/functions/server/:splat"
+status = 200

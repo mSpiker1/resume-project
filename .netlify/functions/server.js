@@ -1,6 +1,5 @@
 const express = require('express');
-const cors = require('cors');
-const os = require('os');
+const serverless = require('serverless-http');
 const cloudinary = require('cloudinary').v2;
 
 cloudinary.config({
@@ -10,12 +9,12 @@ cloudinary.config({
 });
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const router = express.Router();
 
-app.use(cors());
 app.use(express.json({ limit: '100mb' }));
+app.use('/.netlify/functions/server', router);
 
-app.post('/save-canvas', async (req, res) => {
+router.post('/save-canvas', async (req, res) => {
     try {
         const base64Image = req.body.image;
         if (!base64Image || !base64Image.startsWith('data:image')) {
@@ -35,9 +34,10 @@ app.post('/save-canvas', async (req, res) => {
     }
 });
 
-app.get('/latest-canvas', (req, res) => {
+router.get('/latest-canvas', (req, res) => {
     const timeStamp = Date.now();
     const imageUrl = `https://res.cloudinary.com/${process.env.CLOUD_NAME}/image/upload/canvas.png?t=${timeStamp}`;
+
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
@@ -45,6 +45,4 @@ app.get('/latest-canvas', (req, res) => {
     res.json({ url: imageUrl });
 });
 
-app.listen(PORT, () => {
-    console.log(`Backend listening on port ${PORT}`);
-});
+module.exports.handler = serverless(app);

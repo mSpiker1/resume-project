@@ -160,7 +160,7 @@ function App() {
           const reader = new FileReader();
           reader.onloadend = () => {
             const base64data = reader.result;
-            fetch('https://resume-project-production-0b13.up.railway.app/save-canvas', {
+            fetch('/api/save-canvas', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ image: base64data })
@@ -273,7 +273,7 @@ function App() {
   // Helper function to load the latest canvas art
   const loadLatestCanvas = () => {
     // Set up canvas
-    fetch(`https://resume-project-production-0b13.up.railway.app/latest-canvas?t=${new Date().getTime()}`)
+    fetch(`/api/latest-canvas?t=${new Date().getTime()}`)
     .then(res => res.json())
     .then(data => {
       const img = new Image();
