@@ -37,6 +37,7 @@ router.post('/save-canvas', async (req, res) => {
 });
 
 router.get('/latest-canvas', (req, res) => {
+    console.log("hit latest-canvas");
     const timeStamp = Date.now();
     const imageUrl = `https://res.cloudinary.com/${process.env.CLOUD_NAME}/image/upload/canvas.png?t=${timeStamp}`;
 

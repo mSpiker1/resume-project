@@ -1,0 +1,20 @@
+{
+	"geolocation": {
+		"data": {
+			"city": "Clermont",
+			"country": {
+				"code": "US",
+				"name": "United States"
+			},
+			"subdivision": {
+				"code": "FL",
+				"name": "Florida"
+			},
+			"timezone": "America/New_York",
+			"latitude": 28.5531,
+			"longitude": -81.7597,
+			"postalCode": "34711"
+		},
+		"timestamp": 1750908741426
+	}
+}
