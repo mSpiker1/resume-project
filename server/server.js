@@ -35,8 +35,10 @@ app.post('/save-canvas', async (req, res) => {
 });
 
 app.get('/latest-canvas', (req, res) => {
-    const cloudName = process.env.CLOUD_NAME;
-    const imageUrl = `https://res.cloudinary.com/${cloudName}/image/upload/canvas.png`; // folder + public_id
+    const timeStamp = Date.now();
+    const imageUrl = `https://res.cloudinary.com/
+    ${process.env.CLOUD_NAME}/image/upload/canvas.png?t=${timeStamp}`;
+    res.set('Cache-Control', 'no-store');
     res.redirect(imageUrl);
 });
 
