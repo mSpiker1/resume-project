@@ -8,7 +8,7 @@ cloudinary.config({
     api_secret: process.env.CLOUD_API_SECRET
 });
 
-console.log(CLOUD_NAME, CLOUD_API_KEY);
+console.log("CLOUD_NAME, CLOUD_API_KEY");
 
 const app = express();
 const router = express.Router();
