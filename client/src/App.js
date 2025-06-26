@@ -273,16 +273,18 @@ function App() {
   // Helper function to load the latest canvas art
   const loadLatestCanvas = () => {
     // Set up canvas
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      const context = canvasRef.current.getContext('2d');
-      context.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-      context.drawImage(img, 0, 0);
-    };
-
-    // Load the image onto the canvas
-    img.src = `https://resume-project-production-0b13.up.railway.app/latest-canvas?t=${new Date().getTime()}`;
+    fetch(`https://resume-project-production-0b13.up.railway.app/latest-canvas?t=${new Date().getTime()}`)
+    .then(res => res.json())
+    .then(data => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const context = canvasRef.current.getContext('2d');
+        context.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+        context.drawImage(img, 0, 0);
+      };
+      img.src = data.url;
+    });
   };
 
 
