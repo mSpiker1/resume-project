@@ -13,22 +13,35 @@ const app = express();
 const router = express.Router();
 
 app.use(cors());
-app.use(express.json({ limit: '100mb' }));
+app.use(express.json({ limit: '6mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use('/.netlify/functions/server', router);
 
 router.post('/save-canvas', async (req, res) => {
     try {
+        // Parse image Buffer
+        if(Buffer.isBuffer(req.body)) {
+            try {
+                req.body = JSON.parse(req.body.toString('utf8'));
+            } catch (err) {
+                console.error("Failed to parse Buffer body:", err);
+                return res.status(400).send("Invalid request format.");
+            }
+        }
+
         const base64Image = req.body.image;
+
         if (!base64Image || !base64Image.startsWith('data:image')) {
             return res.status(400).send('Invalid image data.');
         }
   
-    const uploadResponse = await cloudinary.uploader.upload(base64Image, {
-        public_id: 'canvas',
-        overwrite: true,
-        invalidate: true
-    });
+        const uploadResponse = await cloudinary.uploader.upload(base64Image, {
+            public_id: 'canvas',
+            overwrite: true,
+            invalidate: true
+        });
+
+        console.log("Image size (chars):", base64Image.length);
   
         res.status(200).json({ url: uploadResponse.secure_url });
     } catch (err) {
@@ -38,7 +51,6 @@ router.post('/save-canvas', async (req, res) => {
 });
 
 router.get('/latest-canvas', (req, res) => {
-    console.log("hit latest-canvas");
     const timeStamp = Date.now();
     const imageUrl = `https://res.cloudinary.com/${process.env.CLOUD_NAME}/image/upload/canvas.png?t=${timeStamp}`;
 
@@ -47,10 +59,6 @@ router.get('/latest-canvas', (req, res) => {
     res.setHeader('Expires', '0');
 
     res.json({ url: imageUrl });
-});
-
-router.get('/test', (req, res) => {
-    res.json({ message: "Netlify function working!" });
 });
 
 module.exports.handler = serverless(app);
