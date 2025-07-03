@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect} from 'react';
 import { ChromePicker } from 'react-color';
 import AnimatedName from './utils/AnimatedName.js';
+import { db } from "./utils/firebase.js";
 import './App.css';
+import { ref, onChildAdded, update } from '@firebase/database';
 
 function App() {
   // Constants handling drawing canvas directly
@@ -14,7 +16,6 @@ function App() {
   const [isDrawing, setIsDrawing] = useState(false);
   const [drawSize, setDrawSize] = useState(3);
   const lastPos = useRef(null);
-  const saveTimeout = useRef(null);
 
   // Constants handling colors and color changes
   const [selectedColor, setSelectedColor] = useState('#000000'); // Init with default to black
@@ -31,6 +32,11 @@ function App() {
   const [isOverlayClosed, setIsOverlayClosed] = useState(false);
   const [overlayBarLoaded, setOverlayBarLoaded] = useState(false);
 
+  // Constants for firebase relatime db
+  const pendingUpdates = useRef({});
+  const batchTimeout = useRef(null);
+  const renderTimeout = useRef(null);
+
 
 
   // On load actions
@@ -42,8 +48,35 @@ function App() {
       }, 10);
     }
 
-    // Load the most up-to-date canvas art
-    loadLatestCanvas();
+    // Load firebase realtime canvas
+    const canvas = canvasRef.current;
+    const context = canvas.getContext('2d');
+    const strokes = [];
+
+    const unsub = onChildAdded(ref(db, 'canvas'), (snapshot) => {
+      const[x, y] = snapshot.key.split('_').map(Number);
+      const {
+        color,
+        size = 3, // Default size to 3 if not found
+        timestamp
+      } = snapshot.val();
+
+      // Put pixels into an array to sort by timestamp later
+      strokes.push({ x, y, color, size, timestamp });
+
+      if(!renderTimeout.current) {
+        renderTimeout.current = setTimeout(() => {
+          strokes.sort((a, b) => a.timestamp - b.timestamp);
+          strokes.forEach(({ x, y, color, size }) => {
+            context.fillStyle = color;
+            context.beginPath();
+            context.arc(x, y, size / 2, 0, 2 * Math.PI);
+            context.fill();
+          });
+          renderTimeout.current = null;
+        }, 100);
+      }
+    });
 
     // Center the canvas
     const wrapper = canvasContainerRef.current;
@@ -56,9 +89,33 @@ function App() {
     const preventContextMenu = (e) => e.preventDefault();
     window.addEventListener("contextmenu", preventContextMenu);
     return () => {
+      unsub();
       window.removeEventListener("contextmenu", preventContextMenu);
     }
   }, [isOverlayVisible, isOverlayClosed]);
+
+
+
+  // Firebase pixel updates
+  const queuePixelUpdate = (x, y, color, size) => {
+    const key = `${Math.floor(x)}_${Math.floor(y)}`;
+    pendingUpdates.current[key] = { color, size, timestamp: Date.now() };
+
+    if (batchTimeout.current) clearTimeout(batchTimeout.current);
+
+    batchTimeout.current = setTimeout(() => {
+      updateFirebasePixels(pendingUpdates.current);
+      pendingUpdates.current = {};
+    }, 200);
+  };
+
+  const updateFirebasePixels = async (updates) => {
+    try {
+      await update(ref(db, 'canvas'), updates);
+    } catch (err) {
+      console.error("Firebase update failed");
+    }
+  };
 
 
 
@@ -176,31 +233,11 @@ function App() {
       // End drawing
       endDrawing();
 
-      // Check if there is a timeout set to prevent too many POSTs
-      if (saveTimeout.current) {
-        clearTimeout(saveTimeout.current);
+      if ( batchTimeout.current) {
+        clearTimeout(batchTimeout.current);
+        updateFirebasePixels(pendingUpdates.current);
+        pendingUpdates.current = {};
       }
-
-      saveTimeout.current = setTimeout(() => {
-        const canvas = canvasRef.current;
-        canvas.toBlob((blob) => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            const base64data = reader.result;
-            fetch('/.netlify/functions/server/save-canvas', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ image: base64data })
-            }).then(res => {
-              if(!res.ok) console.error('Save failed');
-            });
-          };
-          if (blob) {
-            reader.readAsDataURL(blob);
-          }
-          loadLatestCanvas();
-        }, 'image/png');
-      }, 2000); // Add a 2s delay before next save is allowed
     }
   };
 
@@ -262,6 +299,15 @@ function App() {
     context.beginPath();
     context.arc(x, y, drawSize / 2, 0, 2 * Math.PI);
     context.fill();
+
+    // Calculate all pixels that need updating (brush size)
+    const radius = drawSize / 2;
+    const minX = Math.floor(x - radius);
+    const maxX = Math.ceil(x + radius);
+    const minY = Math.floor(y - radius);
+    const maxY = Math.floor(y + radius);
+
+    queuePixelUpdate(x, y, selectedColor, drawSize);
   };
 
 
@@ -294,22 +340,6 @@ function App() {
     velocity.current = { x: 0, y: 0 };
     lastPos.current = null;
     isDragging.current = false;
-  };
-
-  // Helper function to load the latest canvas art
-  const loadLatestCanvas = () => {
-    fetch('/.netlify/functions/server/latest-canvas')
-    .then(res => res.json())
-    .then(data => {
-      const img = new Image();
-      img.crossOrigin = 'Anonymous';
-      img.onload = () => {
-        const context = canvasRef.current.getContext('2d');
-        context.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-        context.drawImage(img, 0, 0);
-      };
-      img.src = data.url;
-    });
   };
 
 
@@ -406,7 +436,7 @@ function App() {
               <div className="brush-label brush-size-small"/>
             </div>
           </div>
-          <div className="refresh-button" onClick={loadLatestCanvas}>
+          <div className="refresh-button">
             <img src="/refresh.png" alt="refresh canvas"/>
           </div>
         </div>
