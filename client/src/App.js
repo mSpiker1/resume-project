@@ -3,7 +3,7 @@ import { ChromePicker } from 'react-color';
 import AnimatedName from './utils/AnimatedName.js';
 import { db } from "./utils/firebase.js";
 import './App.css';
-import { ref, onChildAdded, update } from '@firebase/database';
+import { ref, onChildAdded, update } from 'firebase/database';
 
 function App() {
   // Constants handling drawing canvas directly
