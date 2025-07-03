@@ -5,7 +5,7 @@ import { getDatabase } from "firebase/database";
 const firebaseConfig = {
     apiKey: process.env.FIRE_API_KEY,
     authDomain: process.env.FIRE_AUTH_DOMAIN,
-    databaseURL: process.env.FIRE_DB_URL,
+    databaseURL: "https://drawing-app-bf1a8-default-rtdb.firebaseio.com",
     projectId: process.env.FIRE_PROJ_ID,
     storageBucket: process.env.FIRE_STORAGE_BUCKET,
     messagingSenderId: process.env.FIRE_SENDER_ID,
