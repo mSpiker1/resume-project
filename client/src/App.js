@@ -336,7 +336,11 @@ function App() {
             <div className="overlay-footer">
               <div className="overlay-footer-item">
                 <img src="/github-icon.png" alt="GitHub" />
-                <a href="https://github.com/mSpiker1" target="_blank">GitHub</a>
+                <a
+                  href="https://github.com/mSpiker1"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >GitHub</a>
               </div>
               <div className="overlay-footer-item">
                 <img src="/email-icon.png" alt="Email" />
@@ -344,7 +348,11 @@ function App() {
               </div>
               <div className="overlay-footer-item">
                 <img src="/linkedin-icon.png" alt="LinkedIn" />
-                <a href="https://linkedin.com/in/matthew-spiker-4a3613179" target="_blank">LinkedIn</a>
+                <a
+                  href="https://linkedin.com/in/matthew-spiker-4a3613179"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >LinkedIn</a>
               </div>
             </div>
           </div>
