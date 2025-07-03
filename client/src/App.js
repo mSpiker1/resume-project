@@ -300,13 +300,6 @@ function App() {
     context.arc(x, y, drawSize / 2, 0, 2 * Math.PI);
     context.fill();
 
-    // Calculate all pixels that need updating (brush size)
-    const radius = drawSize / 2;
-    const minX = Math.floor(x - radius);
-    const maxX = Math.ceil(x + radius);
-    const minY = Math.floor(y - radius);
-    const maxY = Math.floor(y + radius);
-
     queuePixelUpdate(x, y, selectedColor, drawSize);
   };
 
