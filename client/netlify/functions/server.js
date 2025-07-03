@@ -19,7 +19,6 @@ app.use('/.netlify/functions/server', router);
 
 router.post('/save-canvas', async (req, res) => {
     try {
-        // Parse image Buffer
         if(Buffer.isBuffer(req.body)) {
             try {
                 req.body = JSON.parse(req.body.toString('utf8'));
@@ -30,7 +29,6 @@ router.post('/save-canvas', async (req, res) => {
         }
 
         const base64Image = req.body.image;
-
         if (!base64Image || !base64Image.startsWith('data:image')) {
             return res.status(400).send('Invalid image data.');
         }
@@ -40,8 +38,6 @@ router.post('/save-canvas', async (req, res) => {
             overwrite: true,
             invalidate: true
         });
-
-        console.log("Image size (chars):", base64Image.length);
   
         res.status(200).json({ url: uploadResponse.secure_url });
     } catch (err) {

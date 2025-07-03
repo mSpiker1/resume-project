@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect} from 'react';
 import { ChromePicker } from 'react-color';
-import './utils/pixel-perfect.js';
+import AnimatedName from './utils/AnimatedName.js';
 import './App.css';
 
 function App() {
@@ -28,11 +28,20 @@ function App() {
 
   // Constant handling text overlay
   const [isOverlayVisible, setIsOverlayVisible] = useState(true);
+  const [isOverlayClosed, setIsOverlayClosed] = useState(false);
+  const [overlayBarLoaded, setOverlayBarLoaded] = useState(false);
 
 
 
   // On load actions
   useEffect(() => {
+    // Apply unique animations if page just loaded
+    if (isOverlayVisible && !isOverlayClosed) {
+      setTimeout(() => {
+        setOverlayBarLoaded(true);
+      }, 10);
+    }
+
     // Load the most up-to-date canvas art
     loadLatestCanvas();
 
@@ -49,15 +58,32 @@ function App() {
     return () => {
       window.removeEventListener("contextmenu", preventContextMenu);
     }
-  }, []);
+  }, [isOverlayVisible, isOverlayClosed]);
 
 
 
   // Toggle color picker state
   const togglePicker = () => setIsPickerOpen(prev => !prev);
 
-  // Enable overlay toggle
-  const toggleOverlay = () => setIsOverlayVisible(prev => !prev);
+  // Handle overlay bar and background animations
+  const toggleOverlay = () => {
+    if (isOverlayVisible) {
+      // Trigger closing animation
+      setIsOverlayClosed(true);
+
+      // Wait to unmount until after the animation ends
+      setTimeout(() => {
+        setIsOverlayVisible(false);
+      }, 500); // Match CSS transition delay (0.5s)
+    } else {
+      // Remount and trigger open animation
+      setIsOverlayVisible(true);
+
+      setTimeout(() => {
+        setIsOverlayClosed(false);
+      }, 10); // One frame delay to allow .closed to be applied
+    }
+  }
 
   // Handles the user selecting a color
   const handleColorChange = (color) => setSelectedColor(color.hex);
@@ -69,10 +95,11 @@ function App() {
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
 
-    // Return mouse coords
+    const BORDER_WIDTH = 15;
+
     return {
-      x: Math.floor(e.clientX - rect.left),
-      y: Math.floor(e.clientY - rect.top)
+      x: Math.floor(e.clientX - rect.left - BORDER_WIDTH),
+      y: Math.floor(e.clientY - rect.top - BORDER_WIDTH)
     };
   };
 
@@ -88,9 +115,9 @@ function App() {
         cancelAnimationFrame(animationFrameID.current);
         animationFrameID.current = null;
       }
+
       velocity.current = { x: 0, y: 0 };
 
-      // Always assume click-and-drag
       isDragging.current = true;
 
       // Drag timer for momentum
@@ -171,6 +198,7 @@ function App() {
           if (blob) {
             reader.readAsDataURL(blob);
           }
+          loadLatestCanvas();
         }, 'image/png');
       }, 2000); // Add a 2s delay before next save is allowed
     }
@@ -178,9 +206,8 @@ function App() {
 
 
 
-  // Set isDrawing event to true
+  // Handler for starting drawing process
   const startDrawing = (e) => {
-    // Set drawing value
     setIsDrawing(true);
 
     // Set up interpolation for smoother drawing
@@ -189,18 +216,17 @@ function App() {
     drawAt(x, y);
   };
 
-  // Reset isDrawing event to false
+  // Reset isDrawing event to false and reset lastPos
   const endDrawing = () => {
-    // Set drawing value and reset lastPos
     setIsDrawing(false);
     lastPos.current = null;
   };
 
   // Handles the user drawing on the canvas
   const draw = (e) => {
-    // Exit function if isDrawing is false
     if (!isDrawing || e.buttons !== 1) return;
-    // Interpolation calcs (funny math that I totally for sure did without any help)
+
+    // Interpolation calcs
     const { x, y } = getMousePos(e);
     const prev = lastPos.current;
     if(prev) {
@@ -272,7 +298,6 @@ function App() {
 
   // Helper function to load the latest canvas art
   const loadLatestCanvas = () => {
-    // Set up canvas
     fetch('/.netlify/functions/server/latest-canvas')
     .then(res => res.json())
     .then(data => {
@@ -291,23 +316,45 @@ function App() {
 
   return (
     <div className="App">
-      {!isOverlayVisible && (
-        <div className="overlay-tab"
-        onClick={toggleOverlay}
-        onMouseEnter={cancelDrag}>
-          ▶
-        </div>
-      )}
       {isOverlayVisible && (
-        <div className={`canvas-overlay ${isOverlayVisible ? 'visible' : ''}`}>
-          <div className="overlay-bar">
-            <span>Placeholder Text</span>
+        <div className={`canvas-overlay ${isOverlayClosed ? 'closed' : ''}`}>
+          <div className={`overlay-bar ${overlayBarLoaded ? 'loaded' : ''}`}>
+            <span>Hi, my name is <AnimatedName /></span>
+            <div className="desc-text">
+              <span>
+                I made this website as a fun way to advertise myself<br/>
+                and my skills to potential employers. If you click the<br/>
+                draw button, you'll hide this bar and be shown a large<br/>
+                canvas, where you can leave a little drawing to show <br/>
+                you've been here. I'm still working on this project, so<br/>
+                keep an eye out for changes at my GitHub repository for it.
+              </span>
+            </div>
             <div className="overlay-hide-button" onClick={toggleOverlay}>
-              Let Me Draw!
+              Draw
+            </div>
+            <div className="overlay-footer">
+              <div className="overlay-footer-item">
+                <img src="/github-icon.png" alt="GitHub" />
+                <a href="https://github.com/mSpiker1" target="_blank">GitHub</a>
+              </div>
+              <div className="overlay-footer-item">
+                <img src="/email-icon.png" alt="Email" />
+                <span>mspiker98@outlook.com</span>
+              </div>
+              <div className="overlay-footer-item">
+                <img src="/linkedin-icon.png" alt="LinkedIn" />
+                <a href="https://linkedin.com/in/matthew-spiker-4a3613179" target="_blank">LinkedIn</a>
+              </div>
             </div>
           </div>
         </div>
       )}
+      <div className={`overlay-tab ${isOverlayClosed ? 'visible' : 'hidden'}`}
+      onClick={toggleOverlay}
+      onMouseEnter={cancelDrag}>
+        ▶
+      </div>
       <div ref={canvasContainerRef}
         className={`canvas-container ${isOverlayVisible ? 'disabled' : ''}`}>
         <canvas

@@ -23,22 +23,71 @@ html, body {
   align-items: center;
   z-index: 10;
   overflow: hidden;
-  transition: background-color 0.4s ease;
-  background-color: #dab36c80;
+  left: 0;
+  transition: background-color 0.5s ease;
+  background-color: #4178df80;
 }
 
 /* Text inside overlay bar */
 .overlay-bar {
   width: 100%;
-  background-color: #f0f0f099;
-  border-top: 3px solid #262c3b;
-  border-bottom: 3px solid #262c3b;
+  background-color: #c7c7c799;
+  border-top: 3px solid white;
+  border-bottom: 3px solid white;
+  border-right: 3px solid white;
+  border-top-right-radius: 2rem;
+  border-bottom-right-radius: 2rem;
+  box-shadow: 3px 0 6px #0202023d;
   padding: 1rem;
   text-align: center;
   color: black;
-  font-size: 1.25rem;
+  font-family: verdana;
+  font-size: 2rem;
+  font-weight: bold;
   position: relative;
-  transition: left 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  left: 0;
+  transition: left 0.5s ease;
+  z-index: 2;
+}
+
+.overlay-bar > * {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.overlay-bar.loaded > * {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.overlay-bar.loaded > *:nth-child(1) { transition-delay: 0.2s; }
+.overlay-bar.loaded > *:nth-child(2) { transition-delay: 0.4s; }
+.overlay-bar.loaded > *:nth-child(4) { transition-delay: 0.7s; }
+
+/* Special rules for the 'float-in' on the draw button */
+.overlay-bar.loaded > *:nth-child(3) {
+  transform: translateY(-20px);
+  transition-delay: 0.5s;
+}
+
+/* Overlay bg fade-out */
+.canvas-overlay.closed {
+  background-color: transparent;
+}
+
+/* Overlay bar slide-out */
+.canvas-overlay.closed .overlay-bar {
+  left: -100%;
+}
+
+.desc-text {
+  position: relative;
+  top: 2rem;
+  font-size: 1.3rem;
+  font-weight: normal;
 }
 
 /* Hide overlay button */
@@ -46,31 +95,74 @@ html, body {
   position: absolute;
   right: 1rem;
   top: 50%;
-  transform: translateY(-50%);
-  width: 2rem;
+  transform: translateY(0);
+  width: 4rem;
   height: 2rem;
-  background-color: #262c3b;
+  background-color: #1e2f5c;
   color: white;
+  border: 3px solid white;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  font-size: 1.2rem;
+  font-family: verdana;
   font-weight: bold;
-  border-radius: 0.25rem;
+  border-radius: 0.5rem;
+  box-shadow: 3px 0 6px #0202023d;
+}
+
+.overlay-footer {
+  margin-top: 125px;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  width: 100%;
+  padding: 1.5rem 0;
+}
+
+.overlay-footer-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.2rem;
+  font-family: arial;
+  font-weight: normal;
+  color: black;
+}
+
+.overlay-footer-item img {
+  position: relative;
+  width: 25px;
+  height: 25px;
+  margin: 0;
+  object-fit: contain;
 }
 
 /* Hidden overlay tab */
 .overlay-tab {
   position: absolute;
-  left: 0;
+  left: 100%;
   top: 50%;
   transform: translateY(-50%);
-  background-color: #262c3b;
+  background-color: #1e2f5c;
+  border-top: 2px solid white;
+  border-bottom: 2px solid white;
+  border-right: 2px solid white;
   color: white;
   padding: 0.5rem;
   cursor: pointer;
-  z-index: 5;
+  z-index: 12;
   border-radius: 0 0.5rem 0.5rem 0;
+  transition: left 0.5s ease;
+}
+
+.overlay-tab.hidden {
+  left: 100%;
+}
+
+.overlay-tab.visible {
+  left: 0;
 }
 
 /* Canvas interaction setting */
@@ -90,7 +182,7 @@ html, body {
 
 .drawing-canvas {
   position: absolute;
-  border: 1px solid #000;
+  border: 15px solid #1e2f5c;
   cursor: crosshair; /* make sure to specify pointer for the overlay later */
   top: 0;
   left: 0;
@@ -121,7 +213,7 @@ html, body {
   top: 0;
   height: 40px;
   width: 30px;
-  background-color: #333;
+  background-color: #1e2f5c;
   color: white;
   font-size: 1.2rem;
   display: flex;
@@ -131,6 +223,7 @@ html, body {
   pointer-events: auto;
   border-top-left-radius: 5px;
   border-bottom-left-radius: 5px;
+  transition: right 0.3s ease;
 }
 
 .color-picker-wrapper {
