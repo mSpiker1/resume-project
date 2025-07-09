@@ -3,7 +3,7 @@ import { ChromePicker } from 'react-color';
 import AnimatedName from './utils/AnimatedName.js';
 import { db } from "./utils/firebase.js";
 import './App.css';
-import { ref, onChildAdded, update } from '@firebase/database';
+import { ref, onChildAdded, onChildRemoved, get, remove, push } from '@firebase/database';
 
 function App() {
   // Constants handling drawing canvas directly
@@ -20,6 +20,7 @@ function App() {
   // Constants handling colors and color changes
   const [selectedColor, setSelectedColor] = useState('#000000'); // Init with default to black
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [isEraserActive, setIsEraserActive] = useState(false);
 
   // Constants handling drag momentum
   const isDragging = useRef(false);
@@ -33,9 +34,9 @@ function App() {
   const [overlayBarLoaded, setOverlayBarLoaded] = useState(false);
 
   // Constants for firebase relatime db
-  const pendingUpdates = useRef({});
-  const batchTimeout = useRef(null);
   const renderTimeout = useRef(null);
+  const pendingLine = useRef(null);
+  const erasedLines = useRef(new Set());
 
 
 
@@ -52,31 +53,52 @@ function App() {
     const canvas = canvasRef.current;
     const context = canvas.getContext('2d');
     const strokes = [];
+    const linesRef = ref(db, 'canvas/lines');
 
-    const unsub = onChildAdded(ref(db, 'canvas'), (snapshot) => {
-      const[x, y] = snapshot.key.split('_').map(Number);
+    // Handle new lines and all lines when loading the page
+    const renderLines = onChildAdded(ref(db, 'canvas/lines'), (snapshot) => {
       const {
         color,
-        size = 3, // Default size to 3 if not found
-        timestamp
+        bsize,
+        lineTime,
+        pixels
       } = snapshot.val();
 
-      // Put pixels into an array to sort by timestamp later
-      strokes.push({ x, y, color, size, timestamp });
+      // Put lines into an array to sort by number
+      strokes.push({ color, bsize, lineTime, pixels });
 
       if(!renderTimeout.current) {
         renderTimeout.current = setTimeout(() => {
-          strokes.sort((a, b) => a.timestamp - b.timestamp);
-          strokes.forEach(({ x, y, color, size }) => {
+          strokes.sort((a, b) => a.lineTime - b.lineTime);
+          strokes.forEach(({ color, bsize, pixels }) => {
             context.fillStyle = color;
-            context.beginPath();
-            context.arc(x, y, size / 2, 0, 2 * Math.PI);
-            context.fill();
+            pixels.forEach(coord => {
+              const [x, y] = coord.split('_').map(Number);
+              context.beginPath();
+              context.arc(x, y, bsize / 2, 0, 2 * Math.PI);
+              context.fill();
+            });
           });
           renderTimeout.current = null;
         }, 100);
       }
     });
+
+    // Handle lines being removed
+    const removeLines = onChildRemoved(linesRef, (snapshot) => {
+      const removedData = snapshot.val();
+
+      const index = strokes.findIndex(line =>
+        line.lineTime === removedData.lineTime &&
+        line.color === removedData.color &&
+        JSON.stringify(line.pixels) === JSON.stringify(removedData.pixels)
+      );
+
+      if (index !== -1) {
+        strokes.splice(index, 1);
+        redrawCanvas(context, strokes);
+      }
+    })
 
     // Center the canvas
     const wrapper = canvasContainerRef.current;
@@ -89,35 +111,60 @@ function App() {
     const preventContextMenu = (e) => e.preventDefault();
     window.addEventListener("contextmenu", preventContextMenu);
     return () => {
-      unsub();
+      renderLines();
+      removeLines();
       window.removeEventListener("contextmenu", preventContextMenu);
     }
   }, [isOverlayVisible, isOverlayClosed]);
 
 
 
+  ///////////////////////////////////////////////////
+  ////            CANVAS RENDERING               ////
+  ///////////////////////////////////////////////////
+
   // Firebase pixel updates
-  const queuePixelUpdate = (x, y, color, size) => {
+  const queueLinePixel = (x, y) => {
     const key = `${Math.floor(x)}_${Math.floor(y)}`;
-    pendingUpdates.current[key] = { color, size, timestamp: Date.now() };
-
-    if (batchTimeout.current) clearTimeout(batchTimeout.current);
-
-    batchTimeout.current = setTimeout(() => {
-      updateFirebasePixels(pendingUpdates.current);
-      pendingUpdates.current = {};
-    }, 200);
-  };
-
-  const updateFirebasePixels = async (updates) => {
-    try {
-      await update(ref(db, 'canvas'), updates);
-    } catch (err) {
-      console.error("Firebase update failed");
+    if(!pendingLine.current.pixels.includes(key)){
+      pendingLine.current.pixels.push(key);
     }
   };
 
+  const updateFirebaseLines = async () => {
+    const linesRef = ref(db, 'canvas/lines');
+    const newLine = pendingLine.current;
 
+    try {
+      await push(linesRef, newLine);
+    } catch (err) {
+      console.error("Failed to update line: ", err);
+    }
+  };
+
+  const redrawCanvas = (context, lines) => {
+    const canvas = canvasRef.current;
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.imageSmoothingEnabled = false;
+  
+    lines
+      .sort((a, b) => a.lineTime - b.lineTime)
+      .forEach(({ color, bsize, pixels }) => {
+        context.fillStyle = color;
+        pixels.forEach(coord => {
+          const [x, y] = coord.split('_').map(Number);
+          context.beginPath();
+          context.arc(x, y, bsize / 2, 0, 2 * Math.PI);
+          context.fill();
+        });
+      });
+  };
+
+
+
+  ///////////////////////////////////////////////////
+  ////                 TOGGLES                   ////
+  //////////////////////////////////////////////////
 
   // Toggle color picker state
   const togglePicker = () => setIsPickerOpen(prev => !prev);
@@ -145,7 +192,17 @@ function App() {
   // Handles the user selecting a color
   const handleColorChange = (color) => setSelectedColor(color.hex);
 
+  // Toggle eraser bahavior
+  const toggleEraser = () => {
+    setIsEraserActive(prev => !prev);
+    if (!isEraserActive) setIsPickerOpen(true);
+  }
 
+
+
+  ///////////////////////////////////////////////////
+  ////             MOUSE FUNCTIONS               ////
+  ///////////////////////////////////////////////////
 
   // Helper to get mouse position
   const getMousePos = (e) => {
@@ -159,8 +216,6 @@ function App() {
       y: Math.floor(e.clientY - rect.top - BORDER_WIDTH)
     };
   };
-
-
 
   // Handle left/right mouse clicks
   const handleMouseDown = (e) => {
@@ -191,7 +246,7 @@ function App() {
 
   // Handle right/left click-and-drag
   const handleMouseMove = (e) => {
-    if (isDragging.current) {
+    if (isDragging.current) { // Right Click
       e.preventDefault();
 
       // Get positional differences
@@ -212,14 +267,14 @@ function App() {
         y: -((e.clientY - lastDrag.current.y) / dt * 16) * 0.5
       };
       lastDrag.current = { time: now, x: e.clientX, y: e.clientY };
-    } else if (e.buttons === 1) {
-      draw(e);
+    } else if (e.buttons === 1) { // Left Click
+      drawInterpol(e);
     }
   };
 
   // Stop click-and-drag events
   const handleMouseUp = (e) => {
-    if (e.button === 2) {
+    if (e.button === 2) { // Right click
       isDragging.current = false;
 
       // Employ velocity check for a minimum threshold before applying momentum
@@ -229,27 +284,41 @@ function App() {
       } else {
         velocity.current = { x: 0, y: 0 };
       }
-    } else if (e.button === 0) {
-      // End drawing
+    } else if (e.button === 0) { // Left Click
+      // End drawing and update firebase with current line
       endDrawing();
-
-      if ( batchTimeout.current) {
-        clearTimeout(batchTimeout.current);
-        updateFirebasePixels(pendingUpdates.current);
-        pendingUpdates.current = {};
-      }
+      updateFirebaseLines(pendingLine.current);
     }
   };
 
 
 
+  ///////////////////////////////////////////////////
+  ////            DRAWING FUNCTIONS              ////
+  ///////////////////////////////////////////////////
+
   // Handler for starting drawing process
   const startDrawing = (e) => {
-    setIsDrawing(true);
-
-    // Set up interpolation for smoother drawing
     const { x, y } = getMousePos(e);
     lastPos.current = { x, y };
+
+    setIsDrawing(true);
+
+    // Handle eraser case
+    if (isEraserActive) {
+      drawAt(x, y);
+      return;
+    }
+
+    // Initialize current line
+    pendingLine.current = {
+      color: selectedColor,
+      bsize: drawSize,
+      lineTime: Date.now(),
+      pixels: []
+    }
+
+    // Start drawing pixels to canvas
     drawAt(x, y);
   };
 
@@ -259,8 +328,8 @@ function App() {
     lastPos.current = null;
   };
 
-  // Handles the user drawing on the canvas
-  const draw = (e) => {
+  // Handles drawing interpolation between pixels
+  const drawInterpol = (e) => {
     if (!isDrawing || e.buttons !== 1) return;
 
     // Interpolation calcs
@@ -289,8 +358,15 @@ function App() {
     lastPos.current = { x, y };
   };
 
-  // Helper function for interpolation w/ circular brush
+  // Handle clientside drawing
   const drawAt = (x, y) => {
+    // Check if eraser is active first
+    if(isEraserActive) {
+      eraseAt(x, y);
+      lastPos.current = { x, y };
+      return;
+    }
+
     const canvas = canvasRef.current;
     const context = canvas.getContext('2d');
 
@@ -300,10 +376,71 @@ function App() {
     context.arc(x, y, drawSize / 2, 0, 2 * Math.PI);
     context.fill();
 
-    queuePixelUpdate(x, y, selectedColor, drawSize);
+    queueLinePixel(x, y);
   };
 
 
+
+  ///////////////////////////////////////////////////
+  ////             ERASER FUNCTIONS              ////
+  ///////////////////////////////////////////////////
+
+  // Handle eraser mode behavior
+  const eraseAt = async (x, y) => {
+    const context = canvasRef.current.getContext('2d');
+    const imageData = context.getImageData(x, y, 1, 1).data;
+  
+    // Ignore if transparent
+    if (imageData[3] === 0) return;
+  
+    const snapshot = await get(ref(db, 'canvas/lines'));
+    const lines = snapshot.val();
+    if (!lines) return;
+  
+    const CURSOR_RADIUS = 8;
+    const candidates = [];
+  
+    for (const [lineKey, { pixels, size }] of Object.entries(lines)) {
+      if (erasedLines.current.has(lineKey)) continue;
+  
+      for (const coord of pixels) {
+        const [px, py] = coord.split('_').map(Number);
+        const dx = x - px;
+        const dy = y - py;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+  
+        if (dist <= size / 2) {
+          candidates.push({ lineKey, dist, size });
+          break;
+        } else if (dist <= CURSOR_RADIUS) {
+          candidates.push({ lineKey, dist, size });
+        }
+      }
+    }
+  
+    if (candidates.length === 0) return;
+  
+    // Prioritize line where cursor falls within brush area
+    const prioritized = candidates
+      .filter(c => c.dist <= c.size / 2)
+      .sort((a, b) => a.dist - b.dist)[0]
+      || candidates.sort((a, b) => a.dist - b.dist)[0];
+  
+    if (prioritized) {
+      try {
+        await remove(ref(db, `canvas/lines/${prioritized.lineKey}`));
+        erasedLines.current.add(prioritized.lineKey);
+      } catch (err) {
+        console.error('Failed to erase line:', err);
+      }
+    }
+  };
+
+
+
+  ///////////////////////////////////////////////////
+  ////              DRAG PHYSICS                 ////
+  ///////////////////////////////////////////////////
 
   // Momentum handler
   const startMomentum = () => {
@@ -390,8 +527,8 @@ function App() {
         className={`canvas-container ${isOverlayVisible ? 'disabled' : ''}`}>
         <canvas
           ref={canvasRef}
-          width={5000}
-          height={5000}
+          width={4000}
+          height={2250}
           className="drawing-canvas"
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
@@ -402,8 +539,10 @@ function App() {
       {!isOverlayVisible && (
         <div className={`color-picker-panel ${isPickerOpen ? 'open' : ''}`}
         onMouseEnter={cancelDrag}>
-          <div className="picker-tab" onClick={togglePicker}>
-            {isPickerOpen ? '▶' : '◀'}
+          <div className="picker-tab" onClick={() => {
+            if (!isEraserActive) togglePicker();
+          }}>
+            {isEraserActive ? '🔒' : isPickerOpen ? '▶' : '◀'}
           </div>
           <div className="color-picker-wrapper">
             <ChromePicker
@@ -429,8 +568,9 @@ function App() {
               <div className="brush-label brush-size-small"/>
             </div>
           </div>
-          <div className="refresh-button">
-            <img src="/refresh.png" alt="refresh canvas"/>
+          <div className={`eraser-button ${isEraserActive ? 'active' : ''}`}
+            onClick={toggleEraser}>
+            <img src="/eraser.png" alt="Eraser"/>
           </div>
         </div>
       )}

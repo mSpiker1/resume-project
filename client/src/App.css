@@ -296,11 +296,11 @@ html, body {
   align-self: center;
 }
 
-.refresh-button {
+.eraser-button {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: #26398d;
+  background-color: #f5daf5;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
@@ -311,14 +311,30 @@ html, body {
   transition: transform 0.12 ease;
 }
 
-.refresh-button:hover {
+.eraser-button:hover {
   transform: scale(1.05);
 }
 
-.refresh-button img {
+.eraser-button img {
   width: 20px;
   height: 20px;
   pointer-events: none;
+}
+
+@keyframes breathe-erase {
+  0% {
+    background-color: #f5daf5;
+  }
+  50% {
+    background-color: #ffffff;
+  }
+  100% {
+    background-color: #f5daf5;
+  }
+}
+
+.eraser-button.active {
+  animation: breathe-erase 1.5s infinite ease-in-out;
 }
 
 @media (max-width: 768px) {
