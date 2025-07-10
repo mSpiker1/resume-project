@@ -11,6 +11,7 @@ function App() {
   const canvasContainerRef = useRef(null);
   const velocity = useRef({ x: 0, y: 0 });
   const animationFrameID = useRef(null);
+  const [canvasOffset, setCanvasOffset] = useState({ left: 0, top: 0 });
 
   // Constants handling drawing functions
   const [isDrawing, setIsDrawing] = useState(false);
@@ -22,6 +23,12 @@ function App() {
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [isEraserActive, setIsEraserActive] = useState(false);
 
+  // Constants handling zoom
+  const MIN_ZOOM = 0.4;
+  const MAX_ZOOM = 8;
+  const ZOOM_FACTOR = 1.3;
+  const zoomLevel = useRef(1);
+
   // Constants handling drag momentum
   const isDragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0 });
@@ -32,6 +39,8 @@ function App() {
   const [isOverlayVisible, setIsOverlayVisible] = useState(true);
   const [isOverlayClosed, setIsOverlayClosed] = useState(false);
   const [overlayBarLoaded, setOverlayBarLoaded] = useState(false);
+  const [isControlsOpen, setIsControlsOpen] = useState(false);
+  const [renderControls, setRenderControls] = useState(false);
 
   // Constants for firebase relatime db
   const renderTimeout = useRef(null);
@@ -51,6 +60,7 @@ function App() {
 
     // Load firebase realtime canvas
     const canvas = canvasRef.current;
+    canvas.style.transformOrigin = 'top left';
     const context = canvas.getContext('2d');
     const strokes = [];
     const linesRef = ref(db, 'canvas/lines');
@@ -103,19 +113,83 @@ function App() {
     // Center the canvas
     const wrapper = canvasContainerRef.current;
     if (wrapper) {
-      wrapper.scrollLeft = (canvasRef.current.width - wrapper.clientWidth) / 2;
-      wrapper.scrollTop = (canvasRef.current.height - wrapper.clientHeight) / 2;
+      wrapper.scrollLeft = ((canvasRef.current.width / zoomLevel.current) - 
+      wrapper.clientWidth) / 2;
+      wrapper.scrollTop = ((canvasRef.current.height / zoomLevel.current) - 
+      wrapper.clientHeight) / 2;
     }
+
+    // Handle changing zoom levels
+    const handleWheel = (e) => {
+      if (e.ctrlKey) return;
+  
+      e.preventDefault();
+      const isZoomingIn = e.deltaY < 0;
+      const scaleMultiplier = isZoomingIn ? ZOOM_FACTOR : 1 / ZOOM_FACTOR;
+      const newZoom = Math.min(
+        MAX_ZOOM,
+        Math.max(MIN_ZOOM, zoomLevel.current * scaleMultiplier));
+      const scaleRatio = newZoom / zoomLevel.current;
+  
+      if (newZoom !== zoomLevel.current) {
+        const wrapper = canvasContainerRef.current;
+
+        // Pause any dragging momentum to avoid weird velocity calcs
+        const wasDragging = isDragging.current;
+        isDragging.current = false;
+  
+        // Get mouse position to preserve position when zooming
+        const rect = wrapper.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        // Check to see if the canvas is smaller than the viewport
+        // This is for centering purposes when zooming out
+        const offsetLeft = (canvas.width * newZoom) < wrapper.clientWidth ?
+        (wrapper.clientWidth - (canvas.width * newZoom)) / 2 : 0;
+        const offsetTop = (canvas.height * newZoom) < wrapper.clientHeight ?
+        (wrapper.clientHeight - (canvas.height * newZoom)) / 2 : 0;
+        setCanvasOffset({ left: offsetLeft, top: offsetTop });
+  
+        // Update actual zoom level and redraw canvas with it
+        zoomLevel.current = newZoom;
+        canvas.style.transform = `scale(${zoomLevel.current})`;
+        redrawCanvas(context, strokes);
+  
+        // Adjust scroll to maintain view center
+        wrapper.scrollLeft = (mouseX + wrapper.scrollLeft) * scaleRatio - mouseX;
+        wrapper.scrollTop = (mouseY + wrapper.scrollTop) * scaleRatio - mouseY;
+
+        // Re-enable dragging if it was active prior to zooming
+        if (wasDragging) {
+          isDragging.current = true;
+          dragStart.current = { x: e.clientX, y: e.clientY };
+          scrollStart.current = { x: wrapper.scrollLeft, y: wrapper.scrollTop};
+          lastDrag.current = { time: performance.now(), x: e.clientX, y: e.clientY};
+        }
+      }
+    };
 
     // Prevent context menu
     const preventContextMenu = (e) => e.preventDefault();
     window.addEventListener("contextmenu", preventContextMenu);
+    window.addEventListener("wheel", handleWheel, { passive: false });
     return () => {
       renderLines();
       removeLines();
+      window.removeEventListener("wheel", handleWheel);
       window.removeEventListener("contextmenu", preventContextMenu);
     }
   }, [isOverlayVisible, isOverlayClosed]);
+
+  // Define custom tooltip div
+  const Tooltip = ({ children, text, className = "", style = {} }) => (
+    <div className={`tooltip-container ${className}`}
+    style={{ position: 'relative', display: 'contents', ...style }}>
+      {children}
+      <div className="tooltip-text">{text}</div>
+    </div>
+  );
 
 
 
@@ -145,7 +219,6 @@ function App() {
   const redrawCanvas = (context, lines) => {
     const canvas = canvasRef.current;
     context.clearRect(0, 0, canvas.width, canvas.height);
-    context.imageSmoothingEnabled = false;
   
     lines
       .sort((a, b) => a.lineTime - b.lineTime)
@@ -198,6 +271,17 @@ function App() {
     if (!isEraserActive) setIsPickerOpen(true);
   }
 
+  // Toggle controls display
+  const toggleControls = () => {
+    if (isControlsOpen) {
+      setIsControlsOpen(false);
+      setTimeout(() => setRenderControls(false), 300);
+    } else {
+      setRenderControls(true);
+      setTimeout(() => setIsControlsOpen(true), 10);
+    }
+  }
+
 
 
   ///////////////////////////////////////////////////
@@ -208,12 +292,13 @@ function App() {
   const getMousePos = (e) => {
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
+    const z = zoomLevel.current;
 
     const BORDER_WIDTH = 15;
 
     return {
-      x: Math.floor(e.clientX - rect.left - BORDER_WIDTH),
-      y: Math.floor(e.clientY - rect.top - BORDER_WIDTH)
+      x: Math.floor(e.clientX - rect.left - (BORDER_WIDTH * z)) / z,
+      y: Math.floor(e.clientY - rect.top - (BORDER_WIDTH * z)) / z
     };
   };
 
@@ -522,6 +607,7 @@ function App() {
       onClick={toggleOverlay}
       onMouseEnter={cancelDrag}>
         ▶
+        <span className="tooltip-text tooltip-overlay-tab">Reopen Home</span>
       </div>
       <div ref={canvasContainerRef}
         className={`canvas-container ${isOverlayVisible ? 'disabled' : ''}`}>
@@ -529,6 +615,11 @@ function App() {
           ref={canvasRef}
           width={4000}
           height={2250}
+          style={{
+            transform: `scale(${zoomLevel.current})`,
+            left: `${canvasOffset.left}px`,
+            top: `${canvasOffset.top}px`,
+          }}
           className="drawing-canvas"
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
@@ -537,13 +628,31 @@ function App() {
         />
       </div>
       {!isOverlayVisible && (
-        <div className={`color-picker-panel ${isPickerOpen ? 'open' : ''}`}
-        onMouseEnter={cancelDrag}>
-          <div className="picker-tab" onClick={() => {
-            if (!isEraserActive) togglePicker();
-          }}>
-            {isEraserActive ? '🔒' : isPickerOpen ? '▶' : '◀'}
+        <div className="controls-help-panel" onMouseEnter={cancelDrag && endDrawing}>
+        <Tooltip text="Controls Guide" className="tooltip-controls-guide">
+          <div className="controls-help-tab" onClick={() => toggleControls()}>
+            🖱️
           </div>
+        </Tooltip>
+        {renderControls && (
+          <div className={`controls-help-popup ${isControlsOpen ? 'slide-up' : 'slide-down'}`}>
+            <div className="controls-close" onClick={() => setIsControlsOpen(false)}>×</div>
+            <img src="/controls.png" alt="Controls Guide" />
+          </div>
+          )}
+        </div>
+      )}
+      {!isOverlayVisible && (
+        <div className={`color-picker-panel ${isPickerOpen ? 'open' : ''}`}
+        onMouseEnter={cancelDrag && endDrawing}>
+          <Tooltip text="Open/Close Color Picker"
+          className={isPickerOpen ? "tooltip-openpicker-adjust" : "tooltip-closedpicker-adjust"}>
+            <div className="picker-tab" onClick={() => {
+              if (!isEraserActive) togglePicker();
+            }}>
+              {isEraserActive ? '🔒' : isPickerOpen ? '▶' : '◀'}
+            </div>
+          </Tooltip>
           <div className="color-picker-wrapper">
             <ChromePicker
               color={selectedColor}
@@ -551,27 +660,31 @@ function App() {
               disableAlpha
             />
           </div>
-          <div className="brush-slider-container"
-          onMouseEnter={cancelDrag}>
-            <input
-              type="range"
-              min="2"
-              max="10"
-              value={drawSize}
-              onChange={(e) => setDrawSize(Number(e.target.value))}
-              className="brush-slider"
-              orient="vertical"
-            />
-            <div className="brush-labels">
-              <div className="brush-label brush-size-large"/>
-              <div className="brush-label brush-size-medium"/>
-              <div className="brush-label brush-size-small"/>
+          <Tooltip text="Brush Size Slider" className="tooltip-brush-slider">
+            <div className="brush-slider-container"
+            onMouseEnter={cancelDrag && endDrawing}>
+              <input
+                type="range"
+                min="2"
+                max="10"
+                value={drawSize}
+                onChange={(e) => setDrawSize(Number(e.target.value))}
+                className="brush-slider"
+                orient="vertical"
+              />
+              <div className="brush-labels">
+                <div className="brush-label brush-size-large"/>
+                <div className="brush-label brush-size-medium"/>
+                <div className="brush-label brush-size-small"/>
+              </div>
             </div>
-          </div>
-          <div className={`eraser-button ${isEraserActive ? 'active' : ''}`}
-            onClick={toggleEraser}>
-            <img src="/eraser.png" alt="Eraser"/>
-          </div>
+          </Tooltip>
+          <Tooltip text="Eraser" className="tooltip-eraser">
+            <div className={`eraser-button ${isEraserActive ? 'active' : ''}`}
+              onClick={toggleEraser}>
+              <img src="/eraser.png" alt="Eraser"/>
+            </div>
+          </Tooltip>
         </div>
       )}
     </div>
